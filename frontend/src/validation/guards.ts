@@ -1,4 +1,7 @@
-import type { AgentProfile, FailureAnalysis, GeneratedTest, RunRecord } from "../models";
+import type {
+  AgentProfile, AnalyzeResponse, EvaluateResponse, FailureAnalysis, GenerateResponse,
+  GeneratedTest, RecommendResponse, RecommendedTest, RunRecord,
+} from "../models";
 
 type JsonRecord = Record<string, unknown>;
 const TEST_CATEGORIES = new Set(["happy_path", "invalid_input", "edge_case", "security", "consistency"]);
@@ -30,9 +33,14 @@ export function isGeneratedTest(value: unknown): value is GeneratedTest {
   if (!isRecord(value)) return false;
   return (
     typeof value.input === "string" && typeof value.expected_behaviour === "string" &&
-    typeof value.category === "string" && TEST_CATEGORIES.has(value.category) &&
-    (value.spawned_from === undefined || typeof value.spawned_from === "string")
+    typeof value.category === "string" && TEST_CATEGORIES.has(value.category)
   );
+}
+
+export function isRecommendedTest(value: unknown): value is RecommendedTest {
+  if (!isRecord(value)) return false;
+  return typeof value.input === "string" && typeof value.expected_behaviour === "string" &&
+    typeof value.category === "string" && typeof value.spawned_from === "string";
 }
 
 export function isFailureAnalysis(value: unknown): value is FailureAnalysis {
@@ -56,4 +64,20 @@ export function isRunRecord(value: unknown): value is RunRecord {
 
 export function parseJsonSafely(value: string): unknown {
   try { return JSON.parse(value) as unknown; } catch { return undefined; }
+}
+
+export function isGenerateResponse(value: unknown): value is GenerateResponse {
+  return isRecord(value) && Array.isArray(value.tests) && value.tests.every(isGeneratedTest);
+}
+
+export function isEvaluateResponse(value: unknown): value is EvaluateResponse {
+  return isRecord(value) && typeof value.passed === "boolean" && typeof value.reasoning === "string";
+}
+
+export function isAnalyzeResponse(value: unknown): value is AnalyzeResponse {
+  return isRecord(value) && Array.isArray(value.analyses) && value.analyses.every(isFailureAnalysis);
+}
+
+export function isRecommendResponse(value: unknown): value is RecommendResponse {
+  return isRecord(value) && Array.isArray(value.tests) && value.tests.every(isRecommendedTest);
 }

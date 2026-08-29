@@ -9,7 +9,13 @@ export interface GeneratedTest {
   input: string;
   expected_behaviour: string;
   category: GeneratedTestCategory;
-  spawned_from?: string;
+}
+
+export interface RecommendedTest {
+  input: string;
+  expected_behaviour: string;
+  category: string;
+  spawned_from: string;
 }
 
 export type FailureType =
@@ -26,8 +32,11 @@ export interface FailureAnalysis {
   failure_type: FailureType;
 }
 
-export interface RunTest extends Omit<GeneratedTest, "spawned_from"> {
+export interface RunTest {
   id: string;
+  input: string;
+  expected_behaviour: string;
+  category: string;
   actual_response?: string;
   latency_ms?: number;
   passed?: boolean;

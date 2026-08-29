@@ -42,4 +42,4 @@ npm run build
 
 ## Current status
 
-Phases 1 and 2 are complete: the React foundation is established, and users can create, validate, edit, delete, persist, and select reusable target-agent profiles.
+Phases 1–3 are complete: the React foundation and reusable agent profiles are established, along with typed clients for the four reasoning endpoints and direct target-agent execution.

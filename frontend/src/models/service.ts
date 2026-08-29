@@ -1,5 +1,5 @@
 import type { AgentContext } from "./agent";
-import type { FailureAnalysis, GeneratedTest, RunTest } from "./test";
+import type { FailureAnalysis, GeneratedTest, RecommendedTest } from "./test";
 
 export interface GenerateRequest {
   requirements: string;
@@ -20,7 +20,12 @@ export interface EvaluateResponse { passed: boolean; reasoning: string; }
 export interface AnalyzeRequest {
   requirements: string;
   agent_context: AgentContext;
-  failed_tests: Pick<RunTest, "id" | "input" | "expected_behaviour" | "actual_response">[];
+  failed_tests: Array<{
+    id: string;
+    input: string;
+    expected_behaviour: string;
+    actual_response: string;
+  }>;
 }
 export interface AnalyzeResponse { analyses: FailureAnalysis[]; }
 
@@ -29,4 +34,10 @@ export interface RecommendRequest {
   agent_context: AgentContext;
   analyses: FailureAnalysis[];
 }
-export interface RecommendResponse { tests: GeneratedTest[]; }
+export interface RecommendResponse { tests: RecommendedTest[]; }
+
+export interface TargetExecutionResult {
+  actual_response: string;
+  latency_ms: number;
+  status_code: number;
+}
