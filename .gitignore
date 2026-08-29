@@ -1,30 +1,22 @@
-# Python bytecode and tooling
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.coverage
-htmlcov/
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
 
-# Virtual environments
-.venv/
-venv/
-
-# Local configuration and secrets
+# Local configuration
 .env
+.env.*
 !.env.example
 
-# Build and package output
-build/
-dist/
-*.egg-info/
-
-# Local run artefacts
-runs/*
-!runs/.gitkeep
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
 
 # Editor and operating-system files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-
