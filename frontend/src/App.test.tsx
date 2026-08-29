@@ -29,7 +29,7 @@ describe("agent management shell", () => {
 
     expect(screen.getByRole("heading", { name: "BookBot demo" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Use for new run" }));
-    expect(screen.getByRole("heading", { name: "Run setup" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Set up a test run" })).toBeVisible();
     expect(screen.getByText("BookBot demo")).toBeVisible();
   });
 });
