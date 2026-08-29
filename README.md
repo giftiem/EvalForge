@@ -42,4 +42,4 @@ npm run build
 
 ## Current status
 
-Phase 1 is complete: the React project, TypeScript data contracts, centralized constants, runtime data guards, test environment, and initial application shell are established.
+Phases 1 and 2 are complete: the React foundation is established, and users can create, validate, edit, delete, persist, and select reusable target-agent profiles.
