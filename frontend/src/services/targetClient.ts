@@ -11,11 +11,14 @@ export class TargetClient {
     private readonly now: () => number = () => performance.now(),
   ) {}
 
-  async execute(agent: AgentSnapshot, input: string): Promise<TargetExecutionResult> {
+  async execute(agent: AgentSnapshot, input: string, signal?: AbortSignal): Promise<TargetExecutionResult> {
     const requestBody = buildRequestBody(agent.body_template, input);
     const url = agent.method === "GET" ? buildGetUrl(agent.url, requestBody) : agent.url;
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), this.timeoutMs);
+    let timedOut = false;
+    const abortFromCaller = () => controller.abort();
+    signal?.addEventListener("abort", abortFromCaller, { once: true });
+    const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, this.timeoutMs);
     const startedAt = this.now();
     let response: Response;
 
@@ -27,7 +30,10 @@ export class TargetClient {
         signal: controller.signal,
       });
     } catch (error) {
-      if (controller.signal.aborted) {
+      if (signal?.aborted) {
+        throw new NetworkError("The target-agent request was cancelled.", "cancelled", undefined, { cause: error });
+      }
+      if (timedOut) {
         throw new NetworkError(`The target agent timed out after ${this.timeoutMs} ms.`, "timeout", undefined, { cause: error });
       }
       throw new NetworkError(
@@ -38,6 +44,7 @@ export class TargetClient {
       );
     } finally {
       window.clearTimeout(timeout);
+      signal?.removeEventListener("abort", abortFromCaller);
     }
 
     const latencyMs = Math.max(0, Math.round(this.now() - startedAt));
@@ -86,4 +93,3 @@ function buildGetUrl(baseUrl: string, body: unknown): string {
   });
   return url.toString();
 }
-

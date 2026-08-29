@@ -42,4 +42,4 @@ npm run build
 
 ## Current status
 
-Phases 1–4 are complete: users can manage reusable agents, configure a run, generate the initial test suite, persist an immutable agent snapshot, and reopen saved runs.
+All seven MVP phases are complete. EvalForge can manage agents, generate and execute adaptive test suites, evaluate and analyze failures, resume interrupted work, display full evidence dashboards, and export complete runs as JSON.

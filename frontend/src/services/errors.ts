@@ -1,5 +1,6 @@
 export type NetworkErrorCode =
   | "timeout"
+  | "cancelled"
   | "network"
   | "http"
   | "invalid_json"

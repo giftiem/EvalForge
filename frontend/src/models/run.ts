@@ -19,6 +19,7 @@ export interface RunRecord {
   requirements: string;
   constraints?: string;
   status: RunStatus;
+  failed_step?: Exclude<RunStatus, "failed" | "completed">;
   current_step_error?: string;
   iterations: RunIteration[];
   created_at: string;

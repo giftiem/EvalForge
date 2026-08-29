@@ -2,6 +2,8 @@
 
 This is the active implementation plan. The product specification in `gift.md` is the source of truth.
 
+**Implementation status:** Phases 1–7 are complete and verified.
+
 ## Architecture
 
 EvalForge is a single-user React application with no custom backend.
@@ -123,4 +125,3 @@ Completion check: production build succeeds and the main user flow works on desk
 - Existing Python backend: retained temporarily as legacy work, but not part of the new runtime.
 - Langfuse and direct LLM integration: removed from the active application plan because evaluation is supplied by the live reasoning service.
 - Browser localStorage: system of record for the MVP.
-

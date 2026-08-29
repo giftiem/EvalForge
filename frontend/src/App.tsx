@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { AgentProfile, RunRecord } from "./models";
 import { AgentsPage } from "./pages/AgentsPage";
-import { RunPreviewPage } from "./pages/RunPreviewPage";
+import { RunPage } from "./pages/RunPage";
+import { ResultsPage } from "./pages/ResultsPage";
 import { SetupPage } from "./pages/SetupPage";
 import "./styles/global.css";
 
@@ -36,8 +37,9 @@ export default function App() {
       </aside>
       <main className="main-area">
         {view === "agents" && <AgentsPage onUseAgent={useAgent} />}
-        {view === "setup" && <SetupPage initialAgentId={selectedAgentId} onManageAgents={() => setView("agents")} onRunCreated={(run) => openRun(run)} onRunOpen={(run) => openRun(run, true)} />}
-        {(view === "run" || view === "results") && currentRun && <RunPreviewPage run={currentRun} historical={view === "results"} onBack={() => setView("setup")} />}
+        {view === "setup" && <SetupPage initialAgentId={selectedAgentId} onManageAgents={() => setView("agents")} onRunCreated={(run) => openRun(run)} onRunOpen={(run) => openRun(run, run.status === "completed")} />}
+        {view === "run" && currentRun && <RunPage initialRun={currentRun} onBack={() => setView("setup")} onComplete={setCurrentRun} onViewResults={(run) => { setCurrentRun(run); setView("results"); }} />}
+        {view === "results" && currentRun && <ResultsPage run={currentRun} onBack={() => setView("setup")} onResume={() => setView("run")} />}
       </main>
     </div>
   );

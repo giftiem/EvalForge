@@ -52,14 +52,43 @@ export function isFailureAnalysis(value: unknown): value is FailureAnalysis {
 }
 
 export function isRunRecord(value: unknown): value is RunRecord {
-  if (!isRecord(value) || !isRecord(value.agent_snapshot)) return false;
+  if (!isRecord(value) || !isAgentSnapshot(value.agent_snapshot)) return false;
   return (
-    value.schema_version === 1 && typeof value.id === "string" &&
+    value.schema_version === 1 && typeof value.id === "string" && /^run_\d+$/.test(value.id) &&
     typeof value.agent_id === "string" && typeof value.requirements === "string" &&
+    (value.constraints === undefined || typeof value.constraints === "string") &&
     typeof value.status === "string" && RUN_STATUSES.has(value.status) &&
-    Array.isArray(value.iterations) && typeof value.created_at === "string" &&
+    (value.failed_step === undefined || (typeof value.failed_step === "string" && RUN_STATUSES.has(value.failed_step) && !new Set(["failed", "completed"]).has(value.failed_step))) &&
+    (value.current_step_error === undefined || typeof value.current_step_error === "string") &&
+    Array.isArray(value.iterations) && value.iterations.length > 0 && value.iterations.every(isRunIteration) &&
+    typeof value.created_at === "string" &&
     typeof value.updated_at === "string"
   );
+}
+
+function isAgentSnapshot(value: unknown): boolean {
+  return isRecord(value) && typeof value.name === "string" && typeof value.url === "string" &&
+    (value.method === "GET" || value.method === "POST") && isStringRecord(value.headers) &&
+    typeof value.body_template === "string" && typeof value.response_path === "string" &&
+    (value.system_prompt === undefined || typeof value.system_prompt === "string") &&
+    (value.description === undefined || typeof value.description === "string");
+}
+
+function isRunIteration(value: unknown): boolean {
+  return isRecord(value) && typeof value.iteration_number === "number" && Number.isInteger(value.iteration_number) &&
+    value.iteration_number >= 1 && typeof value.pass_rate === "number" && value.pass_rate >= 0 && value.pass_rate <= 1 &&
+    Array.isArray(value.tests) && value.tests.length > 0 && value.tests.every(isRunTest);
+}
+
+function isRunTest(value: unknown): boolean {
+  return isRecord(value) && typeof value.id === "string" && typeof value.input === "string" &&
+    typeof value.expected_behaviour === "string" && typeof value.category === "string" &&
+    (value.actual_response === undefined || typeof value.actual_response === "string") &&
+    (value.latency_ms === undefined || (typeof value.latency_ms === "number" && value.latency_ms >= 0)) &&
+    (value.passed === undefined || typeof value.passed === "boolean") &&
+    (value.eval_reasoning === undefined || typeof value.eval_reasoning === "string") &&
+    (value.failure_analysis === null || isFailureAnalysis(value.failure_analysis)) &&
+    (value.spawned_from === null || typeof value.spawned_from === "string");
 }
 
 export function parseJsonSafely(value: string): unknown {

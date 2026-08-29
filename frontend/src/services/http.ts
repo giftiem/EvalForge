@@ -7,15 +7,19 @@ interface PostJsonOptions<T> {
   timeoutMs?: number;
   guard: ResponseGuard<T>;
   operation: string;
+  signal?: AbortSignal;
 }
 
 export async function postJson<T>(
   url: string,
   body: unknown,
-  { fetcher = fetch, timeoutMs = 30_000, guard, operation }: PostJsonOptions<T>,
+  { fetcher = fetch, timeoutMs = 30_000, guard, operation, signal }: PostJsonOptions<T>,
 ): Promise<T> {
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  let timedOut = false;
+  const abortFromCaller = () => controller.abort();
+  signal?.addEventListener("abort", abortFromCaller, { once: true });
+  const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
   let response: Response;
   try {
     response = await fetcher(url, {
@@ -25,10 +29,12 @@ export async function postJson<T>(
       signal: controller.signal,
     });
   } catch (error) {
-    if (controller.signal.aborted) throw new NetworkError(`${operation} timed out. Try again.`, "timeout", undefined, { cause: error });
+    if (signal?.aborted) throw new NetworkError(`${operation} was cancelled.`, "cancelled", undefined, { cause: error });
+    if (timedOut) throw new NetworkError(`${operation} timed out. Try again.`, "timeout", undefined, { cause: error });
     throw new NetworkError(`${operation} could not reach the EvalForge service.`, "network", undefined, { cause: error });
   } finally {
     window.clearTimeout(timeout);
+    signal?.removeEventListener("abort", abortFromCaller);
   }
 
   const text = await response.text();
