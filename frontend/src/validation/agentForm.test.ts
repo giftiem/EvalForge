@@ -10,6 +10,12 @@ const valid: AgentFormValues = {
 
 describe("agent form validation", () => {
   it("accepts a complete agent", () => expect(validateAgentForm(valid)).toEqual({}));
+  it("allows an empty response path when testing", () => {
+    expect(validateAgentForm({ ...valid, response_path: "" }, { requireResponsePath: false })).toEqual({});
+  });
+  it("still requires a response path by default", () => {
+    expect(validateAgentForm({ ...valid, response_path: "" }).response_path).toMatch("dot-path");
+  });
   it("requires the input placeholder", () => {
     expect(validateAgentForm({ ...valid, body_template: '{"message":"hello"}' }).body_template).toMatch("{{input}}");
   });

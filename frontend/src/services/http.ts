@@ -13,7 +13,7 @@ interface PostJsonOptions<T> {
 export async function postJson<T>(
   url: string,
   body: unknown,
-  { fetcher = fetch, timeoutMs = 30_000, guard, operation, signal }: PostJsonOptions<T>,
+  { fetcher = globalThis.fetch.bind(globalThis), timeoutMs = 30_000, guard, operation, signal }: PostJsonOptions<T>,
 ): Promise<T> {
   const controller = new AbortController();
   let timedOut = false;
