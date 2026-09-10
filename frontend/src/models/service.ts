@@ -40,4 +40,6 @@ export interface TargetExecutionResult {
   actual_response: string;
   latency_ms: number;
   status_code: number;
+  response_payload?: unknown;
+  response_paths?: string[];
 }

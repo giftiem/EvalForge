@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AgentSnapshot } from "../models";
-import { buildRequestBody, resolveResponsePath, TargetClient } from "./targetClient";
+import { buildRequestBody, findTextPaths, resolveResponsePath, TargetClient } from "./targetClient";
 
 const agent: AgentSnapshot = {
   name: "BookBot", url: "https://target.example/chat", method: "POST",
@@ -18,6 +18,12 @@ describe("target request helpers", () => {
 
   it("resolves object and array response paths", () => {
     expect(resolveResponsePath({ choices: [{ message: { content: "Hello" } }] }, "choices.0.message.content")).toBe("Hello");
+  });
+
+  it("finds text response paths in nested payloads", () => {
+    expect(findTextPaths({ json: { message: "Hello" }, choices: [{ text: "Alternative" }] })).toEqual([
+      "json.message", "choices.0.text",
+    ]);
   });
 });
 
@@ -50,6 +56,13 @@ describe("TargetClient", () => {
     const promise = new TargetClient(fetcher).execute(agent, "test");
     await expect(promise).rejects.toMatchObject({ code: "response_path" });
     await expect(promise).rejects.not.toThrow("private-key");
+  });
+
+  it("returns the raw payload when no response path is supplied", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('{"reply":"Hello"}', { status: 200 }));
+    const result = await new TargetClient(fetcher).execute({ ...agent, response_path: "" }, "test");
+    expect(result.actual_response).toBe('{\n  "reply": "Hello"\n}');
+    expect(result.response_paths).toEqual(["reply"]);
   });
 
   it("provides CORS guidance for browser fetch failures", async () => {

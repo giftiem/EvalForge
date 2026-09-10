@@ -15,7 +15,7 @@ export interface AgentFormValues {
 
 export type AgentFormErrors = Partial<Record<keyof AgentFormValues | "form", string>>;
 
-export function validateAgentForm(values: AgentFormValues): AgentFormErrors {
+export function validateAgentForm(values: AgentFormValues, options: { requireResponsePath?: boolean } = {}): AgentFormErrors {
   const errors: AgentFormErrors = {};
   if (!values.name.trim()) errors.name = "Enter a memorable agent name.";
 
@@ -43,7 +43,9 @@ export function validateAgentForm(values: AgentFormValues): AgentFormErrors {
     catch { errors.body_template = "The request body template must be valid JSON."; }
   }
 
-  if (!values.response_path.trim()) errors.response_path = "Enter the dot-path to the reply text.";
+  if (options.requireResponsePath !== false && !values.response_path.trim()) {
+    errors.response_path = "Enter the dot-path to the reply text.";
+  }
   return errors;
 }
 

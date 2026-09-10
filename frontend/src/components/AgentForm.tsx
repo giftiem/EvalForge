@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
-import type { AgentProfile } from "../models";
+import type { AgentProfile, AgentSnapshot } from "../models";
 import {
   headersToRecord, type AgentFormErrors, type AgentFormValues, type HeaderRow, validateAgentForm,
 } from "../validation/agentForm";
+import { TargetClient } from "../services/targetClient";
 
 interface AgentFormProps {
   agent?: AgentProfile;
@@ -29,6 +30,13 @@ function valuesFromAgent(agent?: AgentProfile): AgentFormValues {
 export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
   const [values, setValues] = useState(() => valuesFromAgent(agent));
   const [errors, setErrors] = useState<AgentFormErrors>({});
+  const [testResult, setTestResult] = useState<{
+    success: boolean;
+    message: string;
+    response?: string;
+    responsePaths?: string[];
+  } | undefined>();
+  const [isTesting, setIsTesting] = useState(false);
 
   function update<K extends keyof AgentFormValues>(field: K, value: AgentFormValues[K]) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -55,6 +63,63 @@ export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
       headers: headersToRecord(values.headers), body_template: values.body_template.trim(),
       response_path: values.response_path.trim(), ...optional,
     });
+  }
+
+  async function handleTest(event: FormEvent) {
+    event.preventDefault();
+    setTestResult(undefined);
+    const nextErrors = validateAgentForm(values, { requireResponsePath: false });
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    setIsTesting(true);
+    try {
+      const snapshot: AgentSnapshot = {
+        name: values.name.trim(),
+        url: values.url.trim(),
+        method: values.method,
+        headers: headersToRecord(values.headers),
+        body_template: values.body_template.trim(),
+        response_path: values.response_path.trim(),
+        ...(values.system_prompt.trim() && { system_prompt: values.system_prompt.trim() }),
+        ...(values.description.trim() && { description: values.description.trim() }),
+      };
+
+      console.log("🧪 [AgentTest] Starting test with config:", snapshot);
+
+      const testInput = "test";
+      console.log("🧪 [AgentTest] Test input:", testInput);
+
+      const client = new TargetClient();
+      const result = await client.execute(snapshot, testInput);
+
+      console.log("✅ [AgentTest] Success! Full result:", result);
+
+      setTestResult({
+        success: true,
+        message: result.response_paths?.length
+          ? `Success! Response received. Choose a response path below.`
+          : `Success! Response: ${result.actual_response.slice(0, 100)}${result.actual_response.length > 100 ? "..." : ""}`,
+        response: result.actual_response,
+        responsePaths: result.response_paths,
+      });
+    } catch (error) {
+      console.error("❌ [AgentTest] Error occurred:", error);
+      console.error("❌ [AgentTest] Error details:", {
+        name: error instanceof Error ? error.name : "Unknown",
+        message: error instanceof Error ? error.message : String(error),
+        cause: error instanceof Error && error.cause ? error.cause : null,
+        stack: error instanceof Error ? error.stack : null,
+        fullError: error,
+      });
+
+      setTestResult({
+        success: false,
+        message: error instanceof Error ? error.message : "Test failed. Check your configuration.",
+      });
+    } finally {
+      setIsTesting(false);
+    }
   }
 
   return (
@@ -88,7 +153,7 @@ export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
       <Field label="Request body template" hint="Use the literal {{input}} where each generated prompt belongs." error={errors.body_template} wide>
         <textarea rows={7} value={values.body_template} onChange={(e) => update("body_template", e.target.value)} spellCheck={false} />
       </Field>
-      <Field label="Response path" hint="Dot-path to the reply, for example choices.0.message.content or reply." error={errors.response_path} wide>
+      <Field label="Response path" hint="Optional for testing. Leave blank to inspect the response and find the right dot-path." error={errors.response_path} wide>
         <input value={values.response_path} onChange={(e) => update("response_path", e.target.value)} placeholder="reply" />
       </Field>
       <Field label="System prompt" hint="Optional, but improves evaluation and analysis quality." wide>
@@ -97,7 +162,29 @@ export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
       <Field label="Description" hint="Optional context about what this agent does." wide>
         <textarea rows={3} value={values.description} onChange={(e) => update("description", e.target.value)} placeholder="Customer support agent for an online bookstore." />
       </Field>
-      <div className="form-actions"><button type="button" className="secondary-button" onClick={onCancel}>Cancel</button><button className="primary-button" type="submit">{agent ? "Save changes" : "Save agent"}</button></div>
+
+      {testResult && (
+        <div className={`test-result ${testResult.success ? "success" : "error"}`} role="alert">
+          <span>{testResult.message}</span>
+          {testResult.responsePaths?.length ? (
+            <div className="response-paths">
+              <strong>Text response paths</strong>
+              {testResult.responsePaths.map((path) => (
+                <button type="button" className="path-button" key={path} onClick={() => update("response_path", path)}>{path}</button>
+              ))}
+            </div>
+          ) : null}
+          {testResult.response ? <pre className="response-preview">{testResult.response}</pre> : null}
+        </div>
+      )}
+
+      <div className="form-actions">
+        <button type="button" className="secondary-button" onClick={onCancel}>Cancel</button>
+        <button type="button" className="text-button" disabled={isTesting} onClick={handleTest}>
+          {isTesting ? "Testing..." : "Test agent"}
+        </button>
+        <button className="primary-button" type="submit">{agent ? "Save changes" : "Save agent"}</button>
+      </div>
     </form>
   );
 }

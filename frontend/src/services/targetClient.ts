@@ -6,15 +6,16 @@ type JsonObject = Record<string, unknown>;
 
 export class TargetClient {
   constructor(
-    private readonly fetcher: typeof fetch = fetch,
+    private readonly fetcher: typeof fetch = globalThis.fetch.bind(globalThis),
     private readonly timeoutMs = 30_000,
     private readonly now: () => number = () => performance.now(),
-  ) {}
+  ) { }
 
   async execute(agent: AgentSnapshot, input: string, signal?: AbortSignal): Promise<TargetExecutionResult> {
     const requestBody = buildRequestBody(agent.body_template, input);
     const url = agent.method === "GET" ? buildGetUrl(agent.url, requestBody) : agent.url;
     const controller = new AbortController();
+    console.log("Executing target agent request:", { url, method: agent.method, headers: agent.headers, body: requestBody });
     let timedOut = false;
     const abortFromCaller = () => controller.abort();
     signal?.addEventListener("abort", abortFromCaller, { once: true });
@@ -53,6 +54,15 @@ export class TargetClient {
 
     const payload = parseJsonSafely(text);
     if (payload === undefined) throw new NetworkError("The target agent returned malformed JSON.", "invalid_json", response.status);
+    if (!agent.response_path.trim()) {
+      return {
+        actual_response: JSON.stringify(payload, null, 2),
+        latency_ms: latencyMs,
+        status_code: response.status,
+        response_payload: payload,
+        response_paths: findTextPaths(payload),
+      };
+    }
     const actualResponse = resolveResponsePath(payload, agent.response_path);
     if (typeof actualResponse !== "string") {
       throw new NetworkError(`The response path “${agent.response_path}” did not resolve to text.`, "response_path", response.status);
@@ -81,6 +91,27 @@ export function resolveResponsePath(payload: unknown, path: string): unknown {
     if (typeof current === "object" && current !== null) return (current as JsonObject)[segment];
     return undefined;
   }, payload);
+}
+
+export function findTextPaths(payload: unknown): string[] {
+  const paths: string[] = [];
+
+  function visit(value: unknown, path: string) {
+    if (typeof value === "string") {
+      if (path) paths.push(path);
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => visit(item, path ? `${path}.${index}` : String(index)));
+      return;
+    }
+    if (typeof value === "object" && value !== null) {
+      Object.entries(value as JsonObject).forEach(([key, item]) => visit(item, path ? `${path}.${key}` : key));
+    }
+  }
+
+  visit(payload, "");
+  return paths;
 }
 
 function buildGetUrl(baseUrl: string, body: unknown): string {
