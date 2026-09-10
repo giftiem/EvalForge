@@ -23,7 +23,7 @@ The application uses these existing endpoints:
 
 The browser calls `/api/evalforge/*`. A Netlify Function forwards those requests to the upstream reasoning service, so its address is not embedded in the frontend bundle.
 
-For local Netlify development, copy the environment template:
+For local development, copy the environment template:
 
 ```bash
 cd frontend
@@ -43,8 +43,10 @@ Set this variable in Netlify under **Project configuration → Environment varia
 ```bash
 # Run these commands from the repository root.
 npm install --prefix frontend
-npx netlify dev
+npm run dev
 ```
+
+Vite proxies `/api/evalforge/*` locally using the server-side value from `.env`. Netlify Functions provide the equivalent proxy after deployment.
 
 ## Verification
 

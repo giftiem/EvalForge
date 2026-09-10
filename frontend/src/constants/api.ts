@@ -1,4 +1,5 @@
 export const EVALFORGE_SERVICE_BASE_URL = "/api/evalforge";
+export const REASONING_SERVICE_TIMEOUT_MS = 55_000;
 
 export const SERVICE_ENDPOINTS = {
   generate: `${EVALFORGE_SERVICE_BASE_URL}/generate`,

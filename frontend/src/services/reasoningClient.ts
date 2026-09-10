@@ -1,4 +1,4 @@
-import { SERVICE_ENDPOINTS } from "../constants/api";
+import { REASONING_SERVICE_TIMEOUT_MS, SERVICE_ENDPOINTS } from "../constants/api";
 import type {
   AnalyzeRequest, AnalyzeResponse, EvaluateRequest, EvaluateResponse, GenerateRequest,
   GenerateResponse, RecommendRequest, RecommendResponse,
@@ -7,7 +7,10 @@ import { isAnalyzeResponse, isEvaluateResponse, isGenerateResponse, isRecommendR
 import { postJson } from "./http";
 
 export class ReasoningClient {
-  constructor(private readonly fetcher: typeof fetch = fetch, private readonly timeoutMs = 30_000) {}
+  constructor(
+    private readonly fetcher: typeof fetch = fetch,
+    private readonly timeoutMs = REASONING_SERVICE_TIMEOUT_MS,
+  ) {}
 
   generate(request: GenerateRequest, signal?: AbortSignal): Promise<GenerateResponse> {
     return postJson(SERVICE_ENDPOINTS.generate, request, { fetcher: this.fetcher, timeoutMs: this.timeoutMs, signal, guard: isGenerateResponse, operation: "Test generation" });
