@@ -48,6 +48,8 @@ npm run dev
 
 Vite proxies `/api/evalforge/*` locally using the server-side value from `.env`. Netlify Functions provide the equivalent proxy after deployment.
 
+Reasoning-service calls allow 55 seconds, just below Netlify's synchronous function limit. Direct target-agent calls allow 120 seconds.
+
 ## Verification
 
 ```bash

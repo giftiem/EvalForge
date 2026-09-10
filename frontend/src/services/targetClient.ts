@@ -1,3 +1,4 @@
+import { TARGET_AGENT_TIMEOUT_MS } from "../constants/api";
 import type { AgentSnapshot, TargetExecutionResult } from "../models";
 import { parseJsonSafely } from "../validation/guards";
 import { NetworkError } from "./errors";
@@ -7,7 +8,7 @@ type JsonObject = Record<string, unknown>;
 export class TargetClient {
   constructor(
     private readonly fetcher: typeof fetch = globalThis.fetch.bind(globalThis),
-    private readonly timeoutMs = 30_000,
+    private readonly timeoutMs = TARGET_AGENT_TIMEOUT_MS,
     private readonly now: () => number = () => performance.now(),
   ) { }
 
@@ -35,7 +36,7 @@ export class TargetClient {
         throw new NetworkError("The target-agent request was cancelled.", "cancelled", undefined, { cause: error });
       }
       if (timedOut) {
-        throw new NetworkError(`The target agent timed out after ${this.timeoutMs} ms.`, "timeout", undefined, { cause: error });
+        throw new NetworkError(`The target agent timed out after ${Math.round(this.timeoutMs / 1_000)} seconds.`, "timeout", undefined, { cause: error });
       }
       throw new NetworkError(
         "The target agent could not be reached. Check its URL, availability, and browser CORS policy.",

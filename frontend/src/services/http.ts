@@ -1,4 +1,5 @@
 import { NetworkError } from "./errors";
+import { REASONING_SERVICE_TIMEOUT_MS } from "../constants/api";
 
 export type ResponseGuard<T> = (value: unknown) => value is T;
 
@@ -13,7 +14,7 @@ interface PostJsonOptions<T> {
 export async function postJson<T>(
   url: string,
   body: unknown,
-  { fetcher = globalThis.fetch.bind(globalThis), timeoutMs = 30_000, guard, operation, signal }: PostJsonOptions<T>,
+  { fetcher = globalThis.fetch.bind(globalThis), timeoutMs = REASONING_SERVICE_TIMEOUT_MS, guard, operation, signal }: PostJsonOptions<T>,
 ): Promise<T> {
   const controller = new AbortController();
   let timedOut = false;
