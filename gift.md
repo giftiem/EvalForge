@@ -3,8 +3,10 @@
 This is for building the website itself (Claude Code, or any React setup) — the LLM service is already built and live in Lovable at:
 
 ```
-https://evalforge-test-buddy.lovable.app/api/public
+https://your-service.example/api/public
 ```
+
+Do not commit the real service URL to the repo — it has no auth, so anyone with the address can call it directly. Keep it in `.env` (see `README.md`) and reference it as the reasoning-service base URL below.
 
 ---
 
@@ -20,7 +22,7 @@ Single-user, no backend of its own. **Everything in localStorage as JSON.**
 
 ## LLM Service (already built — call it, don't rebuild it)
 
-Base URL: `https://evalforge-test-buddy.lovable.app/api/public`
+Base URL: `https://your-service.example/api/public`
 
 ### `POST /generate`
 Request:
@@ -185,7 +187,7 @@ Two collections:
 
 ## Networking notes
 
-- The LLM service base URL is fixed: `https://evalforge-test-buddy.lovable.app/api/public`. Put it in one constants file, not scattered inline.
+- The LLM service base URL is fixed: `https://your-service.example/api/public`. Put it in one constants file, not scattered inline.
 - Every LLM service call is `POST`, `Content-Type: application/json`, JSON body in, JSON body out. Wrap calls so network errors, non-200 responses, and unparseable JSON all throw a catchable error with a useful message — the Run screen shows this inline on the relevant stepper step rather than crashing.
 - The target agent call (step 2.1 above) is a *separate* fetch using the agent's own stored `url`/`method`/`headers`/`body_template` — never route that through the LLM service.
 

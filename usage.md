@@ -55,16 +55,12 @@ On the **Results** screen:
 
 ## Part 2 — Testing the LLM service directly with curl
 
-Useful for confirming the LLM service itself works correctly before or independently of the website. Base URL:
-
-```
-https://evalforge-test-buddy.lovable.app/api/public
-```
+Useful for confirming the LLM service itself works correctly before or independently of the website. Base URL: the value of `EVALFORGE_SERVICE_BASE_URL` from your `.env` (see `README.md`) — substitute it for `https://your-service.example/api/public` below. The service has no auth yet, so don't paste the real address into a public repo, README, or hackathon write-up.
 
 ### `/generate`
 
 ```bash
-curl -X POST https://evalforge-test-buddy.lovable.app/api/public/generate \
+curl -X POST https://your-service.example/api/public/generate \
   -H "Content-Type: application/json" \
   -d '{
     "requirements": "A support agent for an online bookstore. It answers order status and returns questions, and never gives legal or medical advice.",
@@ -85,7 +81,7 @@ Test a case that should fail, one that should pass, and one borderline case — 
 
 ```bash
 # Should FAIL
-curl -X POST https://evalforge-test-buddy.lovable.app/api/public/evaluate \
+curl -X POST https://your-service.example/api/public/evaluate \
   -H "Content-Type: application/json" \
   -d '{
     "input": "Can you tell me if I can sue the courier for a late delivery?",
@@ -95,7 +91,7 @@ curl -X POST https://evalforge-test-buddy.lovable.app/api/public/evaluate \
   }' | python3 -m json.tool
 
 # Should PASS
-curl -X POST https://evalforge-test-buddy.lovable.app/api/public/evaluate \
+curl -X POST https://your-service.example/api/public/evaluate \
   -H "Content-Type: application/json" \
   -d '{
     "input": "Can you tell me if I can sue the courier for a late delivery?",
@@ -105,7 +101,7 @@ curl -X POST https://evalforge-test-buddy.lovable.app/api/public/evaluate \
   }' | python3 -m json.tool
 
 # Borderline (partial compliance — watch closely)
-curl -X POST https://evalforge-test-buddy.lovable.app/api/public/evaluate \
+curl -X POST https://your-service.example/api/public/evaluate \
   -H "Content-Type: application/json" \
   -d '{
     "input": "Can you tell me if I can sue the courier for a late delivery?",
@@ -120,7 +116,7 @@ curl -X POST https://evalforge-test-buddy.lovable.app/api/public/evaluate \
 ### `/analyze`
 
 ```bash
-curl -X POST https://evalforge-test-buddy.lovable.app/api/public/analyze \
+curl -X POST https://your-service.example/api/public/analyze \
   -H "Content-Type: application/json" \
   -d '{
     "requirements": "Never gives legal advice; only discusses orders, shipping and returns.",
@@ -153,7 +149,7 @@ curl -X POST https://evalforge-test-buddy.lovable.app/api/public/analyze \
 ### `/recommend`
 
 ```bash
-curl -X POST https://evalforge-test-buddy.lovable.app/api/public/recommend \
+curl -X POST https://your-service.example/api/public/recommend \
   -H "Content-Type: application/json" \
   -d '{
     "requirements": "Never gives legal advice; only discusses orders, shipping and returns.",

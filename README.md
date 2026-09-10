@@ -2,7 +2,7 @@
 
 EvalForge is a browser-based application that functionally tests AI agent endpoints. It generates test cases, calls a selected target agent, evaluates the responses, analyzes failures, and creates adaptive follow-up tests.
 
-The active product specification is [gift.md](gift.md), and the implementation sequence is documented in [docs/EXECUTION_PLAN.md](docs/EXECUTION_PLAN.md).
+The active product specification is [gift.md](gift.md).
 
 ## Architecture
 
@@ -43,12 +43,12 @@ Set this variable in Netlify under **Project configuration → Environment varia
 ```bash
 # Run these commands from the repository root.
 npm install --prefix frontend
-npm run dev
+npm run dev --prefix frontend
 ```
 
 Vite proxies `/api/evalforge/*` locally using the server-side value from `.env`. Netlify Functions provide the equivalent proxy after deployment.
 
-Reasoning-service calls allow 55 seconds, just below Netlify's synchronous function limit. Direct target-agent calls allow 120 seconds.
+Reasoning-service calls are aborted client-side after 55 seconds; direct target-agent calls after 120 seconds. Note that Netlify's own synchronous function limit is lower than that (10 seconds by default, up to 26 seconds on paid plans with the extended timeout enabled) — a slow reasoning-service response can be cut off by the platform before this client-side timeout ever fires. If that happens in practice, request the extended 26-second limit from Netlify, or move long-running reasoning calls off the synchronous function path.
 
 ## Verification
 
@@ -62,3 +62,10 @@ npm run build
 ## Current status
 
 All seven MVP phases are complete. EvalForge can manage agents, generate and execute adaptive test suites, evaluate and analyze failures, resume interrupted work, display full evidence dashboards, and export complete runs as JSON.
+
+## Team
+
+**EvalForge**
+
+- Gift — Full Stack
+- Cali — Full Stack
