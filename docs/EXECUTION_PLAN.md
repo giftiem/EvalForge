@@ -10,7 +10,7 @@ EvalForge is a single-user React application with no custom backend.
 
 The browser communicates with two separate systems:
 
-1. The fixed EvalForge reasoning service at `https://evalforge-test-buddy.lovable.app/api/public` for test generation, evaluation, failure analysis, and recommendations.
+1. The environment-configured EvalForge reasoning service for test generation, evaluation, failure analysis, and recommendations.
 2. The user-selected target agent URL for executing generated prompts.
 
 Agent profiles and complete run records are stored as JSON in browser `localStorage`.
@@ -34,7 +34,7 @@ The application must never call an LLM directly and must never route target-agen
 1. Create the React application with TypeScript and Vite.
 2. Establish folders for screens, reusable components, services, storage, models, hooks, and utilities.
 3. Define TypeScript models matching the agent and run records in `gift.md`.
-4. Put the fixed reasoning-service base URL in one constants file.
+4. Read the reasoning-service base URL and optional endpoint overrides from Vite environment variables in one constants file.
 5. Implement safe JSON parsing and runtime validation at external-data boundaries.
 6. Add test tooling and browser-storage mocks.
 

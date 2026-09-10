@@ -1,5 +1,4 @@
-export const EVALFORGE_SERVICE_BASE_URL =
-  "https://evalforge-test-buddy.lovable.app/api/public" as const;
+export const EVALFORGE_SERVICE_BASE_URL = "/api/evalforge";
 
 export const SERVICE_ENDPOINTS = {
   generate: `${EVALFORGE_SERVICE_BASE_URL}/generate`,

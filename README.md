@@ -8,7 +8,7 @@ The active product specification is [gift.md](gift.md), and the implementation s
 
 - React and TypeScript frontend built with Vite
 - No custom application backend
-- Fixed EvalForge reasoning service for generation, evaluation, analysis, and recommendations
+- Same-origin Netlify Function proxy for the EvalForge reasoning service
 - Direct browser requests to saved target-agent endpoints
 - Agent profiles and run history stored in browser `localStorage`
 
@@ -21,14 +21,29 @@ The application uses these existing endpoints:
 - `POST /analyze`
 - `POST /recommend`
 
-Base URL: `https://evalforge-test-buddy.lovable.app/api/public`
+The browser calls `/api/evalforge/*`. A Netlify Function forwards those requests to the upstream reasoning service, so its address is not embedded in the frontend bundle.
+
+For local Netlify development, copy the environment template:
+
+```bash
+cd frontend
+cp .env.example .env
+```
+
+The main configuration value is:
+
+```text
+EVALFORGE_SERVICE_BASE_URL=https://your-service.example/api/public
+```
+
+Set this variable in Netlify under **Project configuration → Environment variables**, with Functions access, and redeploy. It intentionally has no `VITE_` prefix, so Vite does not expose its value to the browser.
 
 ## Local development
 
 ```bash
 cd frontend
 npm install
-npm run dev
+npx netlify dev
 ```
 
 ## Verification
