@@ -1,11 +1,11 @@
 const ALLOWED_OPERATIONS = new Set(["generate", "evaluate", "analyze", "recommend"]);
 
-export default async (request) => {
+export default async (request, context) => {
   if (request.method !== "POST") {
     return Response.json({ error: "Method not allowed" }, { status: 405, headers: { Allow: "POST" } });
   }
 
-  const operation = new URL(request.url).searchParams.get("operation");
+  const operation = context.params.operation;
   if (!operation || !ALLOWED_OPERATIONS.has(operation)) {
     return Response.json({ error: "Unknown EvalForge operation" }, { status: 404 });
   }
@@ -39,4 +39,8 @@ export default async (request) => {
     console.error("EvalForge upstream request failed", error);
     return Response.json({ error: "The EvalForge service could not be reached" }, { status: 502 });
   }
+};
+
+export const config = {
+  path: "/api/evalforge/:operation",
 };

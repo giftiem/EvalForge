@@ -41,8 +41,8 @@ Set this variable in Netlify under **Project configuration → Environment varia
 ## Local development
 
 ```bash
-cd frontend
-npm install
+# Run these commands from the repository root.
+npm install --prefix frontend
 npx netlify dev
 ```
 
