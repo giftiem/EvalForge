@@ -1,50 +1,109 @@
 .run-page {
-  --ink: #182238;
-  --muted: #566278;
-  --border: #d5dce6;
-  --danger: #b82f42;
-  --blue: #245fda;
-  color: var(--ink);
-  background: #f5f7fa;
   min-height: calc(100vh - 62px);
   max-width: none;
 }
-.run-page .page-heading h1 { color: #182238; }
-.run-page .page-heading p:last-child, .run-page .section-heading p { color: #566278; }
-.run-page .eyebrow { color: #245fda; }
-.run-page .run-stepper, .run-page .live-test-card, .run-page .iteration-section,
-.run-page .run-metrics article, .run-page .run-complete, .run-page .test-review {
-  color: #182238;
-  background: #fff;
-  border-color: #d5dce6;
-  box-shadow: 0 1px 4px #1822380a;
+
+.run-page .iteration-section {
+  padding: 16px;
+  border-radius: 10px;
 }
-.run-page .iteration-section { padding: 16px; border-radius: 10px; }
-.run-page .test-copy p, .run-page .test-copy blockquote { color: #24334a; font-size: 14px; }
-.run-page .test-copy label { color: #566278; font-size: 11px; }
-.run-page .secondary-button { color: #334057; background: #fff; border-color: #bfc9d8; }
-.run-page .primary-button { color: #fff; background: #245fda; border-color: #245fda; }
-.run-page .danger-button, .run-page .run-error { color: #b82f42; background: #fff3f4; border-color: #edcbd0; }
-.run-page .text-button { color: #245fda; }
-.run-page .field > span { color: #334057; font-size: 12px; }
-.run-page .field input, .run-page .field textarea, .run-page .field select { color: #182238; background: #fff; border-color: #bfc9d8; font-size: 14px; }
-.run-page .evaluation-note, .run-page .analysis-note { font-size: 13px; }
-.run-page .heading-actions { flex-wrap: wrap; }
-.test-review { padding: 20px; margin-bottom: 18px; border: 1px solid #d5dce6; border-radius: 10px; }
-.test-review h2 { margin: 0; font-size: 18px; }
-.test-review p, .review-toolbar p { color: #566278; font-size: 14px; line-height: 1.5; }
-.review-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-.run-page .test-copy .field > span { display: block; }
-.test-suite-actions { margin: 14px 0; }
-.suite-hint { color: #566278; font-size: 12px; }
-.suite-import { margin-top: 22px; padding: 18px; border: 1px solid var(--border); border-radius: 9px; }
-.suite-import h2 { margin: 0; font-size: 15px; }
-.suite-import p, .attachment-status { color: var(--muted); font-size: 12px; }
-.code-import { margin: 0 0 20px; background: #141218; }
-.run-status.paused { color: #dfb66c; background: #332918; }
-.run-page .evaluation-note.pass { color: #205b44; background: #effaf3; }
-.run-page .evaluation-note.fail { color: #8e2e3b; background: #fff1f3; }
-.run-page .analysis-note { color: #4d3d71; background: #f5f1ff; }
-.run-page .evaluation-note span, .run-page .analysis-note span { color: inherit; }
-.run-page .run-step.pending { color: #566278; }
-@media (max-width: 580px) { .review-toolbar { align-items: flex-start; flex-direction: column; } }
+
+.run-page .test-copy p,
+.run-page .test-copy blockquote {
+  font-size: 14px;
+}
+
+.run-page .test-copy label {
+  font-size: 11px;
+}
+
+.run-page .field>span {
+  font-size: 12px;
+}
+
+.run-page .field input,
+.run-page .field textarea,
+.run-page .field select {
+  font-size: 14px;
+}
+
+.run-page .evaluation-note,
+.run-page .analysis-note {
+  font-size: 13px;
+}
+
+.run-page .heading-actions {
+  flex-wrap: wrap;
+}
+
+.test-review {
+  padding: 20px;
+  margin-bottom: 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.test-review h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.test-review p,
+.review-toolbar p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.review-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.run-page .test-copy .field>span {
+  display: block;
+}
+
+.test-suite-actions {
+  margin: 14px 0;
+}
+
+.suite-hint {
+  font-size: 12px;
+}
+
+.suite-import {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.suite-import h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.suite-import p,
+.attachment-status {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.code-import {
+  margin: 0 0 20px;
+}
+
+.run-page .evaluation-note span,
+.run-page .analysis-note span {
+  color: inherit;
+}
+
+@media (max-width: 580px) {
+  .review-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "./hooks/useTheme";
 import type { AgentProfile, RunRecord } from "./models";
 import { AgentsPage } from "./pages/AgentsPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -7,6 +8,7 @@ import { ResultsPage } from "./pages/ResultsPage";
 import { SetupPage } from "./pages/SetupPage";
 import "./styles/global.css";
 import "./styles/run.css";
+import "./styles/theme.css";
 
 type View = "dashboard" | "agents" | "setup" | "run" | "results";
 
@@ -16,6 +18,7 @@ export default function App() {
   const [currentRun, setCurrentRun] = useState<RunRecord>();
   const [createAgentOnOpen, setCreateAgentOnOpen] = useState(false);
   const [agentArchive, setAgentArchive] = useState<File>();
+  const { theme, toggleTheme } = useTheme();
 
   function useAgent(agent: AgentProfile) { setSelectedAgentId(agent.id); setView("setup"); }
   function openRun(run: RunRecord, historical = false) { setCurrentRun(run); setView(historical ? "results" : "run"); }
@@ -31,6 +34,7 @@ export default function App() {
           <button className={view === "run" ? "active" : ""} disabled={!currentRun} onClick={() => setView("run")}><span>◫</span>Live run</button>
           <button className={view === "results" ? "active" : ""} disabled={!currentRun} onClick={() => setView("results")}><span>▥</span>Results</button>
         </nav>
+        <button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}><span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span><b>{theme === "dark" ? "Light mode" : "Dark mode"}</b></button>
         <div className="sidebar-foot"><span className="status-dot" /><div><strong>System operational</strong><small>Reasoning service online</small></div></div>
       </aside>
       <main className="main-area">
