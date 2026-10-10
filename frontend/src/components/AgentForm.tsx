@@ -4,9 +4,11 @@ import {
   headersToRecord, type AgentFormErrors, type AgentFormValues, type HeaderRow, validateAgentForm,
 } from "../validation/agentForm";
 import { TargetClient } from "../services/targetClient";
+import { saveCodeArchive } from "../storage/codeArchive";
 
 interface AgentFormProps {
   agent?: AgentProfile;
+  initialArchive?: File;
   onCancel: () => void;
   onSave: (agent: AgentProfile) => void;
 }
@@ -27,8 +29,8 @@ function valuesFromAgent(agent?: AgentProfile): AgentFormValues {
   };
 }
 
-export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
-  const [values, setValues] = useState(() => valuesFromAgent(agent));
+export function AgentForm({ agent, initialArchive, onCancel, onSave }: AgentFormProps) {
+  const [values, setValues] = useState(() => ({ ...valuesFromAgent(agent), ...(!agent && initialArchive && { name: initialArchive.name.replace(/\.zip$/i, "") }) }));
   const [errors, setErrors] = useState<AgentFormErrors>({});
   const [testResult, setTestResult] = useState<{
     success: boolean;
@@ -37,6 +39,9 @@ export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
     responsePaths?: string[];
   } | undefined>();
   const [isTesting, setIsTesting] = useState(false);
+  const [archive, setArchive] = useState<File | undefined>(initialArchive);
+  const [archiveError, setArchiveError] = useState<string>();
+  const [isSaving, setIsSaving] = useState(false);
 
   function update<K extends keyof AgentFormValues>(field: K, value: AgentFormValues[K]) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -47,7 +52,7 @@ export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
     update("headers", values.headers.map((row) => row.id === id ? { ...row, [field]: value } : row));
   }
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const nextErrors = validateAgentForm(values);
     setErrors(nextErrors);
@@ -56,13 +61,24 @@ export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
       ...(values.system_prompt.trim() && { system_prompt: values.system_prompt.trim() }),
       ...(values.description.trim() && { description: values.description.trim() }),
     };
-    onSave({
-      id: agent?.id ?? `agent_${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`,
-      created_at: agent?.created_at ?? new Date().toISOString(),
-      name: values.name.trim(), url: values.url.trim(), method: values.method,
-      headers: headersToRecord(values.headers), body_template: values.body_template.trim(),
-      response_path: values.response_path.trim(), ...optional,
-    });
+    const id = agent?.id ?? `agent_${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
+    setIsSaving(true);
+    setArchiveError(undefined);
+    try {
+      if (archive) await saveCodeArchive(id, archive);
+      onSave({
+        id,
+        created_at: agent?.created_at ?? new Date().toISOString(),
+        name: values.name.trim(), url: values.url.trim(), method: values.method,
+        headers: headersToRecord(values.headers), body_template: values.body_template.trim(),
+        response_path: values.response_path.trim(), ...optional,
+        ...((archive || agent?.code_archive) && { code_archive: archive ? { name: archive.name, size: archive.size } : agent?.code_archive }),
+      });
+    } catch (error) {
+      setArchiveError(error instanceof Error ? error.message : "Could not save the attachment.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function handleTest(event: FormEvent) {
@@ -163,6 +179,22 @@ export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
         <textarea rows={3} value={values.description} onChange={(e) => update("description", e.target.value)} placeholder="Customer support agent for an online bookstore." />
       </Field>
 
+      <Field label="Code archive (optional)" hint="Attach a ZIP of your agent code. Saved in this browser only; it is not unpacked or executed." wide>
+        <input type="file" accept=".zip,application/zip" onChange={(event) => {
+          const file = event.target.files?.[0];
+          setArchiveError(undefined);
+          if (file && !file.name.toLowerCase().endsWith(".zip")) {
+            setArchive(undefined);
+            setArchiveError("Choose a ZIP file.");
+            event.target.value = "";
+            return;
+          }
+          setArchive(file);
+        }} />
+      </Field>
+      {(archive || agent?.code_archive) && <p className="attachment-status" role="status">{archive?.name ?? agent?.code_archive?.name} · {Math.ceil((archive?.size ?? agent?.code_archive?.size ?? 0) / 1024)} KB {archive ? "— ready to upload when saved" : "— uploaded locally"}</p>}
+      {archiveError && <p className="inline-error" role="alert">{archiveError}</p>}
+
       {testResult && (
         <div className={`test-result ${testResult.success ? "success" : "error"}`} role="alert">
           <span>{testResult.message}</span>
@@ -183,7 +215,7 @@ export function AgentForm({ agent, onCancel, onSave }: AgentFormProps) {
         <button type="button" className="text-button" disabled={isTesting} onClick={handleTest}>
           {isTesting ? "Testing..." : "Test agent"}
         </button>
-        <button className="primary-button" type="submit">{agent ? "Save changes" : "Save agent"}</button>
+        <button className="primary-button" type="submit" disabled={isSaving}>{isSaving ? "Saving..." : agent ? "Save changes" : "Save agent"}</button>
       </div>
     </form>
   );

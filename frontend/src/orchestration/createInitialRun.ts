@@ -1,5 +1,6 @@
 import type { AgentProfile, GenerateRequest, GenerateResponse, RunRecord } from "../models";
 import { RunRepository } from "../storage/runRepository";
+import type { TestDefinition } from "../reporting/testSuite";
 
 export interface GenerateClient { generate(request: GenerateRequest): Promise<GenerateResponse>; }
 
@@ -29,6 +30,14 @@ export async function createInitialRun(
   });
   if (generated.tests.length === 0) throw new Error("Test generation returned an empty suite.");
 
+  return createRunFromTests(input, generated.tests, repository);
+}
+
+export function createRunFromTests(input: CreateInitialRunInput, tests: TestDefinition[], repository = new RunRepository()): RunRecord {
+  if (!tests.length) throw new Error("The test suite cannot be empty.");
+  const requirements = input.requirements.trim();
+  const constraints = input.constraints?.trim();
+
   const now = new Date().toISOString();
   const agentSnapshot = {
     name: input.agent.name,
@@ -47,11 +56,11 @@ export async function createInitialRun(
     agent_snapshot: agentSnapshot,
     requirements,
     ...(constraints && { constraints }),
-    status: "running",
+    status: "paused",
     iterations: [{
       iteration_number: 1,
       pass_rate: 0,
-      tests: generated.tests.map((test, index) => ({
+      tests: tests.map((test, index) => ({
         ...test, id: `t${index + 1}`, failure_analysis: null, spawned_from: null,
       })),
     }],

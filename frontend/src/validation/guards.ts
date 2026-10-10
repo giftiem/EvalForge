@@ -6,7 +6,7 @@ import type {
 type JsonRecord = Record<string, unknown>;
 const TEST_CATEGORIES = new Set(["happy_path", "invalid_input", "edge_case", "security", "consistency"]);
 const FAILURE_TYPES = new Set(["hallucination", "inconsistency", "scope_violation", "security", "instruction_following", "other"]);
-const RUN_STATUSES = new Set(["generating", "running", "evaluating", "analyzing", "adapting", "completed", "failed"]);
+const RUN_STATUSES = new Set(["generating", "running", "evaluating", "analyzing", "adapting", "completed", "failed", "paused"]);
 
 export function isRecord(value: unknown): value is JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -25,7 +25,8 @@ export function isAgentProfile(value: unknown): value is AgentProfile {
     typeof value.response_path === "string" &&
     (value.system_prompt === undefined || typeof value.system_prompt === "string") &&
     (value.description === undefined || typeof value.description === "string") &&
-    typeof value.created_at === "string"
+    typeof value.created_at === "string" &&
+    (value.code_archive === undefined || (isRecord(value.code_archive) && typeof value.code_archive.name === "string" && typeof value.code_archive.size === "number" && value.code_archive.size >= 0))
   );
 }
 
@@ -58,7 +59,7 @@ export function isRunRecord(value: unknown): value is RunRecord {
     typeof value.agent_id === "string" && typeof value.requirements === "string" &&
     (value.constraints === undefined || typeof value.constraints === "string") &&
     typeof value.status === "string" && RUN_STATUSES.has(value.status) &&
-    (value.failed_step === undefined || (typeof value.failed_step === "string" && RUN_STATUSES.has(value.failed_step) && !new Set(["failed", "completed"]).has(value.failed_step))) &&
+    (value.failed_step === undefined || (typeof value.failed_step === "string" && RUN_STATUSES.has(value.failed_step) && !new Set(["failed", "completed", "paused"]).has(value.failed_step))) &&
     (value.current_step_error === undefined || typeof value.current_step_error === "string") &&
     Array.isArray(value.iterations) && value.iterations.length > 0 && value.iterations.every(isRunIteration) &&
     typeof value.created_at === "string" &&
@@ -77,6 +78,7 @@ function isAgentSnapshot(value: unknown): boolean {
 function isRunIteration(value: unknown): boolean {
   return isRecord(value) && typeof value.iteration_number === "number" && Number.isInteger(value.iteration_number) &&
     value.iteration_number >= 1 && typeof value.pass_rate === "number" && value.pass_rate >= 0 && value.pass_rate <= 1 &&
+    (value.tests_reviewed === undefined || typeof value.tests_reviewed === "boolean") &&
     Array.isArray(value.tests) && value.tests.length > 0 && value.tests.every(isRunTest);
 }
 

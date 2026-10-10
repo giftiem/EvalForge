@@ -12,6 +12,27 @@ const agent: AgentProfile = {
 };
 
 describe("SetupPage", () => {
+  it("imports code ZIP into agent creation even when there are no saved agents", () => {
+    const client = { generate: vi.fn() };
+    const onRunCreated = vi.fn();
+    const onImportCode = vi.fn();
+    render(<SetupPage client={client} onManageAgents={vi.fn()} onImportCode={onImportCode} onRunCreated={onRunCreated} onRunOpen={vi.fn()} />);
+    const file = new File(["code"], "my-agent.zip", { type: "application/zip" });
+    fireEvent.change(screen.getByLabelText("Import code ZIP"), { target: { files: [file] } });
+    expect(onImportCode).toHaveBeenCalledWith(file);
+    expect(client.generate).not.toHaveBeenCalled();
+    expect(onRunCreated).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Import tests" })).not.toBeInTheDocument();
+  });
+
+  it("rejects non-ZIP code uploads", () => {
+    const onImportCode = vi.fn();
+    render(<SetupPage onManageAgents={vi.fn()} onImportCode={onImportCode} onRunCreated={vi.fn()} onRunOpen={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Import code ZIP"), { target: { files: [new File(["{}"], "tests.json")] } });
+    expect(screen.getByRole("alert")).toHaveTextContent("Choose a ZIP file");
+    expect(onImportCode).not.toHaveBeenCalled();
+  });
+
   it("generates, saves, and opens an initial run", async () => {
     new AgentRepository().save(agent);
     const onRunCreated = vi.fn();

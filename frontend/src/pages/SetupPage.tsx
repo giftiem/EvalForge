@@ -9,11 +9,12 @@ interface SetupPageProps {
   initialAgentId?: string;
   client?: GenerateClient;
   onManageAgents: () => void;
+  onImportCode?: (file: File) => void;
   onRunCreated: (run: RunRecord) => void;
   onRunOpen: (run: RunRecord) => void;
 }
 
-export function SetupPage({ initialAgentId, client, onManageAgents, onRunCreated, onRunOpen }: SetupPageProps) {
+export function SetupPage({ initialAgentId, client, onManageAgents, onImportCode, onRunCreated, onRunOpen }: SetupPageProps) {
   const agents = useMemo(() => new AgentRepository().list(), []);
   const runRepository = useMemo(() => new RunRepository(), []);
   const generationClient = useMemo(() => client ?? new ReasoningClient(), [client]);
@@ -23,6 +24,7 @@ export function SetupPage({ initialAgentId, client, onManageAgents, onRunCreated
   const [constraints, setConstraints] = useState("");
   const [error, setError] = useState<string>();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [archiveError, setArchiveError] = useState<string>();
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -46,6 +48,21 @@ export function SetupPage({ initialAgentId, client, onManageAgents, onRunCreated
   return (
     <section className="page-content setup-page">
       <header className="page-heading"><div><p className="eyebrow">New evaluation</p><h1>Set up a test run</h1><p>Choose a target and define what correct behaviour looks like.</p></div></header>
+
+      <section className="suite-import code-import">
+        <h2>Create an agent from code</h2>
+        <p>Import your agent code as a ZIP, then complete its connection details in the new agent form.</p>
+        <label className="field"><span>Import code ZIP</span><input type="file" accept=".zip,application/zip" disabled={isGenerating || !onImportCode} onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          setArchiveError(undefined);
+          if (!file) return;
+          if (!file.name.toLowerCase().endsWith(".zip")) { setArchiveError("Choose a ZIP file containing your agent code."); return; }
+          onImportCode?.(file);
+        }} /></label>
+        <p>The ZIP is attached locally when you save the agent. It is not unpacked or executed.</p>
+        {archiveError && <p className="inline-error" role="alert">{archiveError}</p>}
+      </section>
 
       {agents.length === 0 ? (
         <section className="empty-state compact"><span className="empty-icon">◎</span><h2>Add an agent first</h2><p>A saved endpoint is required before EvalForge can generate tests.</p><button className="primary-button" onClick={onManageAgents}>Manage agents</button></section>

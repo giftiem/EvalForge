@@ -10,6 +10,7 @@ export interface AgentProfile {
   response_path: string;
   system_prompt?: string;
   description?: string;
+  code_archive?: { name: string; size: number };
   created_at: string;
 }
 

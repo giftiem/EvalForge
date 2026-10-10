@@ -14,6 +14,60 @@ function initialRun(): RunRecord {
 }
 
 describe("RunOrchestrator", () => {
+  it("waits for test approval before calling either API and resumes after approval", async () => {
+    const repository = new RunRepository();
+    repository.save(initialRun());
+    const target = { execute: vi.fn().mockResolvedValue({ actual_response: "Good", latency_ms: 5, status_code: 200 }) };
+    const reasoning = { evaluate: vi.fn().mockResolvedValue({ passed: true, reasoning: "Correct" }), analyze: vi.fn(), recommend: vi.fn() };
+    const engine = new RunOrchestrator(reasoning, target, repository);
+    const paused = await engine.run("run_5000", { reviewBeforeEvaluation: true });
+    expect(paused.status).toBe("paused");
+    expect(target.execute).not.toHaveBeenCalled();
+    expect(reasoning.evaluate).not.toHaveBeenCalled();
+    paused.iterations[0]!.tests_reviewed = true;
+    paused.iterations[0]!.tests[0]!.input = "Edited question";
+    repository.save(paused);
+    const result = await engine.run(paused.id, { reviewBeforeEvaluation: true });
+    expect(result.status).toBe("completed");
+    expect(target.execute).toHaveBeenCalledWith(result.agent_snapshot, "Edited question", undefined);
+  });
+
+  it("pauses between the target response and evaluation without losing the response", async () => {
+    const repository = new RunRepository();
+    const run = initialRun();
+    run.iterations[0]!.tests_reviewed = true;
+    repository.save(run);
+    let paused = false;
+    const target = { execute: vi.fn(async () => { paused = true; return { actual_response: "Captured", latency_ms: 5, status_code: 200 }; }) };
+    const reasoning = { evaluate: vi.fn().mockResolvedValue({ passed: true, reasoning: "Correct" }), analyze: vi.fn(), recommend: vi.fn() };
+    const engine = new RunOrchestrator(reasoning, target, repository);
+    const result = await engine.run(run.id, { shouldPause: () => paused });
+    expect(result.status).toBe("paused");
+    expect(result.iterations[0]!.tests[0]!.actual_response).toBe("Captured");
+    expect(reasoning.evaluate).not.toHaveBeenCalled();
+    await engine.run(run.id);
+    expect(target.execute).toHaveBeenCalledOnce();
+    expect(reasoning.evaluate).toHaveBeenCalledOnce();
+  });
+
+  it("requires another review when adaptive tests are generated", async () => {
+    const repository = new RunRepository();
+    const run = initialRun();
+    run.iterations[0]!.tests_reviewed = true;
+    repository.save(run);
+    const target = { execute: vi.fn().mockResolvedValue({ actual_response: "Bad", latency_ms: 5, status_code: 200 }) };
+    const reasoning = {
+      evaluate: vi.fn().mockResolvedValue({ passed: false, reasoning: "Wrong" }),
+      analyze: vi.fn().mockResolvedValue({ analyses: [{ test_id: "t1", explanation: "Wrong", failure_type: "other" }] }),
+      recommend: vi.fn().mockResolvedValue({ tests: [{ input: "Follow up", expected_behaviour: "Good", category: "custom", spawned_from: "t1" }] }),
+    };
+    const result = await new RunOrchestrator(reasoning, target, repository).run(run.id, { reviewBeforeEvaluation: true });
+    expect(result.status).toBe("paused");
+    expect(result.iterations).toHaveLength(2);
+    expect(target.execute).toHaveBeenCalledOnce();
+    expect(result.iterations[1]!.tests[0]!.actual_response).toBeUndefined();
+  });
+
   it("executes, evaluates, analyzes, and adapts through three iterations", async () => {
     const repository = new RunRepository();
     repository.save(initialRun());

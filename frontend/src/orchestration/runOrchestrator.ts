@@ -18,6 +18,8 @@ export interface RunOptions {
   maxIterations?: number;
   onUpdate?: (run: RunRecord) => void;
   signal?: AbortSignal;
+  reviewBeforeEvaluation?: boolean;
+  shouldPause?: () => boolean;
 }
 
 export class RunOrchestrator {
@@ -32,7 +34,7 @@ export class RunOrchestrator {
     let run = this.repository.get(runId);
     if (!run) throw new Error("The saved run could not be found.");
     if (run.status === "completed" && run.iterations.length >= maxIterations) return run;
-    let activeStep: Exclude<RunStatus, "failed" | "completed"> = "running";
+    let activeStep: Exclude<RunStatus, "failed" | "completed" | "paused"> = "running";
 
     const persist = (status: RunStatus): RunRecord => {
       run = { ...run!, status, updated_at: new Date().toISOString() };
@@ -49,9 +51,11 @@ export class RunOrchestrator {
     try {
       for (let iterationIndex = 0; iterationIndex < run.iterations.length; iterationIndex += 1) {
         const iteration = run.iterations[iterationIndex]!;
+        if (options.reviewBeforeEvaluation && !iteration.tests_reviewed && iteration.tests.some((test) => test.passed === undefined)) return persist("paused");
 
         for (const test of iteration.tests) {
           throwIfCancelled(options.signal);
+          if (options.shouldPause?.()) return persist("paused");
           if (test.actual_response === undefined) {
             activeStep = "running";
             persist(activeStep);
@@ -61,6 +65,8 @@ export class RunOrchestrator {
             persist(activeStep);
           }
           if (test.passed === undefined) {
+            throwIfCancelled(options.signal);
+            if (options.shouldPause?.()) return persist("paused");
             activeStep = "evaluating";
             persist(activeStep);
             const evaluation = await this.reasoning.evaluate({
@@ -77,6 +83,8 @@ export class RunOrchestrator {
         }
 
         updatePassRate(iteration);
+        throwIfCancelled(options.signal);
+        if (options.shouldPause?.()) return persist("paused");
         const failedTests = iteration.tests.filter((test) => test.passed === false);
         if (failedTests.length === 0) return persist("completed");
 
@@ -103,6 +111,8 @@ export class RunOrchestrator {
         }
 
         if (iteration.iteration_number >= maxIterations) return persist("completed");
+        throwIfCancelled(options.signal);
+        if (options.shouldPause?.()) return persist("paused");
         if (run.iterations[iterationIndex + 1]) continue;
 
         activeStep = "adapting";
